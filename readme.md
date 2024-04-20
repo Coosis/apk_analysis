@@ -1,7 +1,9 @@
 # A project to analyse .apks to detect malware.
 ## dependencies:
 ```
+pytorch
 androguard
+pyyaml
 ```
 
 ## To start, first clone the repository:
