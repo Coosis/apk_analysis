@@ -1,4 +1,5 @@
 import subprocess
+from vocab import Vocab as vocab
 import os
 from androguard.misc import AnalyzeAPK
 
@@ -11,6 +12,12 @@ class ApkExtract:
         self.target_dir = os.path.join(self.root, "target")
         self.tool_path = os.path.join(self.target_dir, "apktool")
         self.output_dir = os.path.join(self.root, "output")
+
+        self.bin_dir = os.path.join(self.root, "bin")
+        self.rough_dir = os.path.join(self.bin_dir, "rough_classifier")
+        self.rough_data_dir = os.path.join(self.rough_dir, "data")
+
+        self.vocab = vocab()
 
     def find_apk_files(self):
         """
@@ -36,6 +43,12 @@ class ApkExtract:
         for apk_name in apk_names:
             dx = self.disassemble_apk(apk_name)
             self.extract_api_calls(dx, apk_name)
+            tokens = self.tokenize_api_calls(apk_name)
+            if not os.path.exists(os.path.join(self.rough_data_dir, apk_name)):
+                os.makedirs(os.path.join(self.rough_data_dir, apk_name))
+            with open(os.path.join(self.rough_data_dir, apk_name, "tokens.txt"), "w") as f:
+                for token in tokens:
+                    f.write(f"{token}\n")
 
     def disassemble_apk(self, apk_name):
         '''
@@ -83,3 +96,17 @@ class ApkExtract:
                     f.write(f"{class_name}/{method_name}\n")
             except Exception as e:
                 print(f"Error: {e}")
+
+    def tokenize_api_calls(self, apk_name):
+        '''
+        Tokenize the API calls for the given APK.
+        '''
+        api_calls_path = os.path.join(self.output_dir, apk_name, "api_calls.txt")
+        tokens = []
+        with open(api_calls_path, "r") as f:
+            api_calls = f.readlines()
+            for api_call in api_calls:
+                api_call = api_call.strip()
+                tokens.append(self.vocab.tokenize(api_call))
+        return tokens
+        

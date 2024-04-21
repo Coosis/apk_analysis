@@ -12,6 +12,8 @@ eval_iters = 10
 
 parent_dir = os.path.dirname(os.path.dirname(__file__))
 data_dir = os.path.join(os.path.dirname(__file__), 'data')
+checkpoints_dir = os.path.join(data_dir, 'checkpoints')
+appdata_dir = os.path.join(data_dir, 'appdata')
 
 def get_batch(mode, data, batch_size, device):
     """
@@ -30,10 +32,10 @@ def get_batch(mode, data, batch_size, device):
     Y_binarys = []
     Y_classifications = []
     for i in idx:
-        with open(os.path.join(data_dir, data[i], "api.txt"), 'r') as f:
+        with open(os.path.join(appdata_dir, data[i], "api.txt"), 'r') as f:
             X = torch.tensor([int(line.strip()) for line in f])
             Xs.append(X)
-        with open(os.path.join(data_dir, data[i], "classification.txt"), 'r') as f:
+        with open(os.path.join(appdata_dir, data[i], "classification.txt"), 'r') as f:
             Y_binary_list = []
             Y_classification_list = []
             for i, line in enumerate(f):
@@ -89,7 +91,7 @@ def main():
     batch_size = hyperparameters['batch_size']
 
     if checkpoint:
-        model_path = os.path.join(data_dir, checkpoint)
+        model_path = os.path.join(checkpoints_dir, checkpoint)
         model.load_state_dict(torch.load(model_path))
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
@@ -98,7 +100,7 @@ def main():
             losses = estimate_loss(model, batch_size, device)
             print(f"step {iter}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
             state_dict = model.state_dict()
-            torch.save(state_dict, f"checkpoint_{epoch}.pth")
+            torch.save(state_dict, os.path.join(checkpoints_dir, f"checkpoint_{epoch}.pth"))
 
         # get the batch
         idx, binary, classification = get_batch('train', os.listdir(data_dir), batch_size, device)
